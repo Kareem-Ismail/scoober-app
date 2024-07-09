@@ -1,49 +1,15 @@
 name: codechallenge
 services:
-#  redpanda:
-#    image: redpandadata/redpanda:v24.1.1
-#    container_name: redpanda1
-#    command:
-#      - redpanda start
-#      - --smp 1
-#      - --overprovisioned
-#      - --node-id 0
-#      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-#      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
-#    ports:
-#      - 9092:9092
-#      - 29092:29092
-#
-#  #  http://localhost:8090
-#  console:
-#    image: docker.redpanda.com/redpandadata/console:v2.5.2
-#    container_name: redpanda-console1
-#    entrypoint: /bin/sh
-#    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
-#    environment:
-#      CONFIG_FILEPATH: /tmp/config.yml
-#      CONSOLE_CONFIG_FILE: |
-#        kafka:
-#          brokers: ["redpanda:29092"]
-#        redpanda:
-#          adminApi:
-#            enabled: true
-#            urls: ["http://redpanda:9644"]
-#    ports:
-#      - 8090:8080
-#    depends_on:
-#      - redpanda
+  #  mongodb://localhost:27017/?authMechanism=DEFAULT
+  mongo:
+    image: mongo:6.0.15
+    container_name: mongodb1
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_DATABASE: mongodatabase
 
-#  mongodb://localhost:27017/?authMechanism=DEFAULT
-#  mongo:
-#    image: mongo:6.0.15
-#    container_name: mongodb1
-#    ports:
-#      - 27017:27017
-#    environment:
-#      MONGO_INITDB_ROOT_DATABASE: mongodatabase
-
-#  http://localhost:15672
+  #  http://localhost:15672
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq1
@@ -61,12 +27,13 @@ services:
       - "8080:8080"
     depends_on:
       - rabbitmq
+      - mongo
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_LISTENER_SIMPLE_ACKNOWLEDGE_MODE: manual
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongodatabase
       APP_PORT: 8080
       PLAYER_NAME: player1
-
 
   scoober-app-p2:
     image: scoober-app
@@ -75,9 +42,11 @@ services:
       - "8081:8081"
     depends_on:
       - rabbitmq
+      - mongo
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_LISTENER_SIMPLE_ACKNOWLEDGE_MODE: manual
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/mongodatabase
       APP_PORT: 8081
       PLAYER_NAME: player2
 

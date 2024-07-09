@@ -11,24 +11,16 @@ import org.springframework.web.bind.annotation.*;
 public class ExampleApi {
 
     @Autowired
-    ExampleH2DB exampleH2DB;
-//    @Autowired
-//    ExampleMongoDB exampleMongoDB;
+    ExampleMongoDB exampleMongoDB;
     @Autowired
     ExampleRabbitMQ exampleRabbitMQ;
 
 
-    @GetMapping("h2")
-    public ResponseEntity<String> testH2DB() {
-        exampleH2DB.testRepository();
-        return new ResponseEntity<>("H2DB test done", HttpStatus.OK);
+    @GetMapping("mongo")
+    public ResponseEntity<String> testMongoDB() {
+        exampleMongoDB.testRepository();
+        return new ResponseEntity<>("MongoDB test done", HttpStatus.OK);
     }
-
-//    @GetMapping("mongo")
-//    public ResponseEntity<String> testMongoDB() {
-//        exampleMongoDB.testRepository();
-//        return new ResponseEntity<>("MongoDB test done", HttpStatus.OK);
-//    }
 
     @PostMapping("/")
     public ResponseEntity<String> testRabbitMQ(@RequestBody StartGameRequest startGameRequest) throws JsonProcessingException {
