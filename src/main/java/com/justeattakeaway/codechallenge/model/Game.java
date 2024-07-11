@@ -1,10 +1,7 @@
 package com.justeattakeaway.codechallenge.model;
 
 import com.querydsl.core.annotations.QueryEntity;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -16,6 +13,8 @@ import java.util.Map;
 @Document
 @Builder
 @QueryEntity
+@NoArgsConstructor
+@AllArgsConstructor
 public class Game {
 
     @Id

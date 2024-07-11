@@ -47,7 +47,7 @@ public class StartGameService {
         return new Queue(CREATE_NEW_GAME_QUEUE, false);
     }
 
-    public String startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
+    public Game startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
 
         if (gameRepository.existsByGameState(GameState.IN_PROGRESS)) {
             Game gameByGameState = gameRepository.findGameByGameState(GameState.IN_PROGRESS);
@@ -61,9 +61,10 @@ public class StartGameService {
                 .lastOnePlayed(playerName).build();
 
         Game newGame = gameRepository.save(game);
-        var s = objectMapper.writeValueAsString(game);
+        var s = objectMapper.writeValueAsString(newGame);
         rabbitTemplate.convertAndSend(CREATE_NEW_GAME_QUEUE, s);
-        return newGame.getId();
+
+        return newGame;
     }
 
     public void setGameMode(boolean isAutomatic) throws JsonProcessingException {
@@ -75,7 +76,7 @@ public class StartGameService {
     }
 
     @RabbitListener(queues = CREATE_NEW_GAME_QUEUE)
-    public void receiveMessage(Message message, Channel channel) throws Exception {
+    public void receiveCreateNewGameMessage(Message message, Channel channel) throws Exception {
         try {
             var game = objectMapper.readValue(new String(message.getBody()), Game.class);
 

@@ -6,8 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 public interface GameRepository extends MongoRepository<Game, String>, QuerydslPredicateExecutor<Game> {
 
@@ -15,6 +13,5 @@ public interface GameRepository extends MongoRepository<Game, String>, QuerydslP
 
     boolean existsByGameState(GameState gameState);
 
-    Optional<Game> findById(String id);
 }
 

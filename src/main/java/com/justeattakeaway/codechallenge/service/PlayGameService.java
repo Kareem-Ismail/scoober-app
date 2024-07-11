@@ -79,6 +79,7 @@ public class PlayGameService {
             log.info("Wohooo ! You won the game with a total number of {} moves, there is no game in progress now if you want to start a new one ;)", gameOverMessage.getNumberOfMoves());
             var gameOverMessageString = objectMapper.writeValueAsString(gameOverMessage);
             rabbitTemplate.convertAndSend(GAME_OVER_QUEUE, gameOverMessageString);
+            gameOver = true;
         }
         game.addNewEvent(new GameEvent(playerName, operation));
         game.setLastOnePlayed(playerName);
