@@ -1,6 +1,7 @@
 package com.justeattakeaway.codechallenge.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.justeattakeaway.codechallenge.model.Game;
 import com.justeattakeaway.codechallenge.model.PlayerModeRequest;
 import com.justeattakeaway.codechallenge.model.StartGameRequest;
 import com.justeattakeaway.codechallenge.service.StartGameService;
@@ -25,10 +26,10 @@ public class StartGameController {
     public ResponseEntity<URI> startGame(@RequestBody StartGameRequest startGameRequest, UriComponentsBuilder uriComponentsBuilder) throws JsonProcessingException {
         Boolean isAutomatic = startGameRequest.getIsAutomatic();
         log.info("Player chose {} mode", isAutomatic ? "Automatic" : "Manual");
-        String s = startGameService.startGame(startGameRequest);
+        Game newGame = startGameService.startGame(startGameRequest);
         URI location = uriComponentsBuilder
                 .path("/play/{id}")
-                .buildAndExpand(s)
+                .buildAndExpand(newGame.getId())
                 .toUri();
         return new ResponseEntity<>(location, HttpStatus.CREATED);
     }
