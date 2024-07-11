@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @Slf4j
 @RestController
@@ -19,11 +22,15 @@ public class StartGameController {
     StartGameService startGameService;
 
     @PostMapping("/create-game")
-    public ResponseEntity<String> startGame(@RequestBody StartGameRequest startGameRequest) throws JsonProcessingException {
+    public ResponseEntity<URI> startGame(@RequestBody StartGameRequest startGameRequest, UriComponentsBuilder uriComponentsBuilder) throws JsonProcessingException {
         Boolean isAutomatic = startGameRequest.getIsAutomatic();
         log.info("Player chose {} mode", isAutomatic ? "Automatic" : "Manual");
-        startGameService.startGame(startGameRequest);
-        return new ResponseEntity<>("Game created successfully", HttpStatus.OK);
+        String s = startGameService.startGame(startGameRequest);
+        URI location = uriComponentsBuilder
+                .path("/play/{id}")
+                .buildAndExpand(s)
+                .toUri();
+        return new ResponseEntity<>(location, HttpStatus.CREATED);
     }
 
     @PatchMapping("/set-player-mode")

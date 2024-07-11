@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class PlayGameService {
 
     private static final String PLAY_GAME_QUEUE = "play-game-queue";
+    private static final String GAME_OVER_QUEUE = "game-over-queue";
     private static final Logger log = LoggerFactory.getLogger(PlayGameService.class);
     private final RabbitTemplate rabbitTemplate;
 
@@ -38,6 +39,16 @@ public class PlayGameService {
     @Bean
     public Queue playGameQueue() {
         return new Queue(PLAY_GAME_QUEUE, false);
+    }
+
+    @Bean
+    public Queue gameOverQueue() {
+        return new Queue(GAME_OVER_QUEUE, false);
+    }
+
+    public GameDTO getGame(String gameId) {
+        Game game = gameRepository.findById(gameId).orElseThrow();
+        return new GameDTO(game.getId(), game.getLastOnePlayed(), game.getEvents(), game.getGameState());
     }
 
     public void playInManualMode(PlayRequest playRequest) throws JsonProcessingException {
@@ -61,14 +72,22 @@ public class PlayGameService {
         int newNumber = game.getLastNumber() + operation;
         log.info("New number is {}", newNumber / 3);
         verifyNumberDivisibleByThree(newNumber);
-        if (newNumber / 3 == 1)
+        boolean gameOver = false;
+        if (newNumber / 3 == 1) {
             game.setGameState(GameState.GAME_OVER);
+            GameOverMessage gameOverMessage = new GameOverMessage(playerName, game.getEvents().size());
+            log.info("Wohooo ! You won the game with a total number of {} moves, there is no game in progress now if you want to start a new one ;)", gameOverMessage.getNumberOfMoves());
+            var gameOverMessageString = objectMapper.writeValueAsString(gameOverMessage);
+            rabbitTemplate.convertAndSend(GAME_OVER_QUEUE, gameOverMessageString);
+        }
         game.addNewEvent(new GameEvent(playerName, operation));
         game.setLastOnePlayed(playerName);
         gameRepository.save(game);
-        var s = objectMapper.writeValueAsString(game);
-        rabbitTemplate.convertAndSend(PLAY_GAME_QUEUE, s);
-        log.info("Operation was successful, waiting for the other player");
+        if (!gameOver) {
+            var s = objectMapper.writeValueAsString(game);
+            rabbitTemplate.convertAndSend(PLAY_GAME_QUEUE, s);
+            log.info("Operation was successful, waiting for the other player");
+        }
     }
 
     @RabbitListener(queues = PLAY_GAME_QUEUE)
@@ -88,6 +107,23 @@ public class PlayGameService {
                         "Please select your gaming mode either Automatic or Manual or else it will be Automatic and choose the next operation whether +1, -1 or 0", gameDTO);
             }
 
+        } catch (Exception e) {
+            log.error("Error processing message: {}", e.getMessage());
+            channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+        }
+    }
+
+    @RabbitListener(queues = GAME_OVER_QUEUE)
+    public void receiveGameOverMessage(Message message, Channel channel) throws Exception {
+        try {
+            var gameOverMessage = objectMapper.readValue(new String(message.getBody()), GameOverMessage.class);
+            if (playerName.equals(gameOverMessage.getWinner()))
+                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+            else {
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                log.info("Sorry you lost the game, good luck next time\n" +
+                        "Player {} won with a total number of {} moves and there is no game in progress if you want to start a new one ;)", gameOverMessage.getWinner(), gameOverMessage.getNumberOfMoves());
+            }
         } catch (Exception e) {
             log.error("Error processing message: {}", e.getMessage());
             channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
