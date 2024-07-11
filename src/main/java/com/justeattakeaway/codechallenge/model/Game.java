@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,16 +36,19 @@ public class Game {
     }
 
     public int getLastNumber() {
-        int reduce = 0;
-
-        if (events != null)
-            reduce = events.stream().map(GameEvent::getOperation).reduce(Integer::sum).orElse(0);
-
-        return initialNumber + reduce;
-
+        int currentNumber = initialNumber;
+        if (events != null) {
+            List<Integer> operations = events.stream().map(GameEvent::getOperation).toList();
+            for (Integer operation : operations) {
+                currentNumber = (currentNumber + operation) / 3;
+            }
+        }
+        return currentNumber;
     }
 
     public void addNewEvent(GameEvent gameEvent) {
+        if(events == null)
+            events = new ArrayList<>();
         events.add(gameEvent);
     }
 }

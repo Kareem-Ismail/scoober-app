@@ -13,7 +13,7 @@ server:
         acknowledge-mode: manual
   data:
     mongodb:
-      uri: "mongodb://localhost:27017/mongodatabase"
+      uri: "mongodb://mongo:27017/mongodatabase"
 game:
   player:
     name: ${PLAYER_NAME:player1}

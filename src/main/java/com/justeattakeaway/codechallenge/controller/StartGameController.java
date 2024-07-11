@@ -27,7 +27,7 @@ public class StartGameController {
     }
 
     @PatchMapping("/set-player-mode")
-    public ResponseEntity<String> setPlayerMode(@RequestBody PlayerModeRequest playerModeRequest) {
+    public ResponseEntity<String> setPlayerMode(@RequestBody PlayerModeRequest playerModeRequest) throws JsonProcessingException {
         Boolean isAutomatic = playerModeRequest.getIsAutomatic();
         log.info("Player chose {} mode", isAutomatic ? "Automatic" : "Manual");
         startGameService.setGameMode(isAutomatic);

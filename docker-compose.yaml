@@ -3,7 +3,7 @@ services:
   #  mongodb://localhost:27017/?authMechanism=DEFAULT
   mongo:
     image: mongo:6.0.15
-    container_name: mongodb1
+    container_name: mongodb
     ports:
       - 27017:27017
     environment:

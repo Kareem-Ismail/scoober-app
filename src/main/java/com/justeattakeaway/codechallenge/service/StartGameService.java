@@ -27,21 +27,24 @@ public class StartGameService {
     @Value("${game.player.name}")
     String playerName;
 
-    private static final String GAME_QUEUE = "game-queue";
+    private static final String CREATE_NEW_GAME_QUEUE = "create-new-game-queue";
 
     private final ObjectMapper objectMapper;
 
     private final GameRepository gameRepository;
 
-    public StartGameService(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper, GameRepository gameRepository) {
+    private final PlayGameService playGameService;
+
+    public StartGameService(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper, GameRepository gameRepository, PlayGameService playGameService) {
         this.rabbitTemplate = rabbitTemplate;
         this.objectMapper = objectMapper;
         this.gameRepository = gameRepository;
+        this.playGameService = playGameService;
     }
 
     @Bean
-    public Queue gameQueue() {
-        return new Queue(GAME_QUEUE, false);
+    public Queue createNewGameQueue() {
+        return new Queue(CREATE_NEW_GAME_QUEUE, false);
     }
 
     public void startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
@@ -59,19 +62,20 @@ public class StartGameService {
 
         gameRepository.save(game);
         var s = objectMapper.writeValueAsString(game);
-        rabbitTemplate.convertAndSend(GAME_QUEUE, s);
+        rabbitTemplate.convertAndSend(CREATE_NEW_GAME_QUEUE, s);
     }
 
-    public void setGameMode(boolean isAutomatic) {
+    public void setGameMode(boolean isAutomatic) throws JsonProcessingException {
         Game game = gameRepository.findGameByGameState(GameState.IN_PROGRESS);
         game.addPlayerGamingMode(playerName, isAutomatic);
         gameRepository.save(game);
+        if (isAutomatic)
+            playGameService.playInAutomaticMode(game.getId());
     }
 
-    @RabbitListener(queues = GAME_QUEUE)
+    @RabbitListener(queues = CREATE_NEW_GAME_QUEUE)
     public void receiveMessage(Message message, Channel channel) throws Exception {
         try {
-            // Process the message
             var game = objectMapper.readValue(new String(message.getBody()), Game.class);
 
             if (playerName.equals(game.getLastOnePlayed()))
@@ -83,16 +87,15 @@ public class StartGameService {
             }
 
         } catch (Exception e) {
-            // Handle the exception and decide whether to nack or requeue the message
             log.error("Error processing message: {}", e.getMessage());
             channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
         }
     }
 
     private int generateRandomNumber() {
-        int randomNumber = (int) (Math.random() * 100);
+        int randomNumber = (int) (Math.random() * 100) + 1;
         while (randomNumber == 1)
-            randomNumber = (int) (Math.random() * 100);
+            randomNumber = (int) (Math.random() * 100) + 1;
         return randomNumber;
     }
 
