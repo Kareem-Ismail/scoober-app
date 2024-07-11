@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.justeattakeaway.codechallenge.model.Game;
 import com.justeattakeaway.codechallenge.model.GameState;
+import com.justeattakeaway.codechallenge.model.StartGameRequest;
 import com.justeattakeaway.codechallenge.repository.GameRepository;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,7 @@ public class StartGameService {
         return new Queue(GAME_QUEUE, false);
     }
 
-    public void startGame(boolean isAutomatic) throws JsonProcessingException {
+    public void startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
 
         if (gameRepository.existsByGameState(GameState.IN_PROGRESS)) {
             Game gameByGameState = gameRepository.findGameByGameState(GameState.IN_PROGRESS);
@@ -52,7 +53,7 @@ public class StartGameService {
         }
 
         Game game = Game.builder().gameState(GameState.IN_PROGRESS)
-                .gamingMode(Map.of(playerName, isAutomatic))
+                .gamingMode(Map.of(playerName, startGameRequest.getIsAutomatic()))
                 .initialNumber(generateRandomNumber())
                 .lastOnePlayed(playerName).build();
 
