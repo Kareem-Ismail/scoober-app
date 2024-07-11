@@ -46,6 +46,11 @@ public class PlayGameService {
         return new Queue(GAME_OVER_QUEUE, false);
     }
 
+    public GameDTO getGame(String gameId) {
+        Game game = gameRepository.findById(gameId).orElseThrow();
+        return new GameDTO(game.getId(), game.getLastOnePlayed(), game.getEvents(), game.getGameState());
+    }
+
     public void playInManualMode(PlayRequest playRequest) throws JsonProcessingException {
         Game game = gameRepository.findById(playRequest.getGameId()).orElseThrow();
         if (game.getLastOnePlayed().equals(playerName))
