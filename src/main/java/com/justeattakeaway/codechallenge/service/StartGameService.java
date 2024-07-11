@@ -47,7 +47,7 @@ public class StartGameService {
         return new Queue(CREATE_NEW_GAME_QUEUE, false);
     }
 
-    public void startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
+    public String startGame(StartGameRequest startGameRequest) throws JsonProcessingException {
 
         if (gameRepository.existsByGameState(GameState.IN_PROGRESS)) {
             Game gameByGameState = gameRepository.findGameByGameState(GameState.IN_PROGRESS);
@@ -60,9 +60,10 @@ public class StartGameService {
                 .initialNumber(generateRandomNumber())
                 .lastOnePlayed(playerName).build();
 
-        gameRepository.save(game);
+        Game newGame = gameRepository.save(game);
         var s = objectMapper.writeValueAsString(game);
         rabbitTemplate.convertAndSend(CREATE_NEW_GAME_QUEUE, s);
+        return newGame.getId();
     }
 
     public void setGameMode(boolean isAutomatic) throws JsonProcessingException {
