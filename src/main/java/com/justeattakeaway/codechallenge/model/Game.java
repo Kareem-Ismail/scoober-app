@@ -20,6 +20,7 @@ public class Game {
 
     @Id
     private String id;
+    @Setter(AccessLevel.NONE)
     private List<GameEvent> events;
     private int initialNumber;
     private GameState gameState;
