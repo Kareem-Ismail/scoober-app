@@ -25,7 +25,7 @@ public class PlayGameService {
     private final ObjectMapper objectMapper;
 
     @Value("${game.player.name}")
-    private String playerName;
+    private String playerName = "playerName";
 
     private final GameRepository gameRepository;
 
@@ -42,8 +42,6 @@ public class PlayGameService {
 
     public void playInManualMode(PlayRequest playRequest) throws JsonProcessingException {
         Game game = gameRepository.findById(playRequest.getGameId()).orElseThrow();
-        if (game.getLastOnePlayed().equals(playerName))
-            throw new IllegalStateException("This is not your turn");
         currentMove(game, playRequest.getOperation());
     }
 
@@ -58,6 +56,8 @@ public class PlayGameService {
     }
 
     public void currentMove(Game game, int operation) throws JsonProcessingException {
+        if (game.getLastOnePlayed().equals(playerName))
+            throw new IllegalStateException("This is not your turn");
         int newNumber = game.getLastNumber() + operation;
         log.info("New number is {}", newNumber / 3);
         verifyNumberDivisibleByThree(newNumber);

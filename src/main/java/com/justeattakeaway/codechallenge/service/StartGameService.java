@@ -25,7 +25,7 @@ public class StartGameService {
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${game.player.name}")
-    String playerName;
+    String playerName = "playerName";
 
     private static final String CREATE_NEW_GAME_QUEUE = "create-new-game-queue";
 
