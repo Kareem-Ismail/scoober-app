@@ -1,10 +1,15 @@
 package com.justeattakeaway.codechallenge.model;
 
 import com.querydsl.core.annotations.QueryEntity;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Document
@@ -14,14 +19,32 @@ public class Game {
 
     @Id
     private String id;
-    private String events;
+    private List<GameEvent> events;
     private int initialNumber;
     private GameState gameState;
-    private PlayerGamingMode playerGamingMode;
+    @Setter(AccessLevel.NONE)
+    private Map<String, Boolean> gamingMode;
     private String lastOnePlayed;
-    private String serverPortNumber;
 
     public String toString() {
-        return String.format("Documents data is %s and ID: %s and state is %s", events, id, gameState.toString());
+        return String.format("Game ID: %s and initial number: %d", id, initialNumber);
+    }
+
+    public void addPlayerGamingMode(String playerName, Boolean isAutomatic) {
+        gamingMode.put(playerName, isAutomatic);
+    }
+
+    public int getLastNumber() {
+        int reduce = 0;
+
+        if (events != null)
+            reduce = events.stream().map(GameEvent::getOperation).reduce(Integer::sum).orElse(0);
+
+        return initialNumber + reduce;
+
+    }
+
+    public void addNewEvent(GameEvent gameEvent) {
+        events.add(gameEvent);
     }
 }

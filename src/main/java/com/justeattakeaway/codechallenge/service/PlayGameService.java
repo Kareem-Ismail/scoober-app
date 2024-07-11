@@ -1,107 +1,50 @@
 package com.justeattakeaway.codechallenge.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.justeattakeaway.codechallenge.configuration.WebSocketClientHandler;
 import com.justeattakeaway.codechallenge.model.Game;
+import com.justeattakeaway.codechallenge.model.GameEvent;
+import com.justeattakeaway.codechallenge.model.GameState;
 import com.justeattakeaway.codechallenge.repository.GameRepository;
-import com.rabbitmq.client.Channel;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.WebSocketSession;
-
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class PlayGameService {
 
     private static final String GAME_QUEUE = "game-queue";
+    private static final Logger log = LoggerFactory.getLogger(PlayGameService.class);
 
     private final ObjectMapper objectMapper;
 
     @Value("${game.player.name}")
     private String playerName;
 
-    @Value("${server.port}")
-    String portNumber;
-
-    private final WebSocketClientHandler myWebSocketClient;
-
     private final GameRepository gameRepository;
 
-    public PlayGameService(ObjectMapper objectMapper, WebSocketClientHandler myWebSocketClient, GameRepository gameRepository) {
+    public PlayGameService(ObjectMapper objectMapper, GameRepository gameRepository) {
         this.objectMapper = objectMapper;
-        this.myWebSocketClient = myWebSocketClient;
         this.gameRepository = gameRepository;
     }
 
-    @RabbitListener(queues = GAME_QUEUE)
-    public void receiveMessage(Message message, Channel channel) throws Exception {
-        try {
-            // Process the message
-            var game = objectMapper.readValue(new String(message.getBody()), Game.class);
+    public void currentMove(int operation) {
+        Game game = gameRepository.findGameByGameState(GameState.IN_PROGRESS);
+        int newNumber = game.getLastNumber() + operation;
+        verifyNumberDivisibleByThree(newNumber);
 
-            if (playerName.equals(game.getLastOnePlayed()))
-                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
-            else {
-                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-                System.out.println("Received message: " + game);
-                String url = String.format("ws://localhost:%s/game", game.getServerPortNumber());
-                if (!Objects.equals(portNumber, game.getServerPortNumber())) {
-                    initiateConnection(url);
-                    if (myWebSocketClient.isConnected()) {
-                        myWebSocketClient.sendMessage("Hello I'm connected");
-                    } else {
-                        System.out.println("Failed to establish WebSocket connection");
-                    }
-                }
-                if (!game.getPlayerGamingMode().isAutomatic()) {
-                    System.out.println("Automatic game");
-                }
-                game.setLastOnePlayed(playerName);
-                gameRepository.save(game);
-            }
+        game.addNewEvent(new GameEvent(playerName, operation));
+        game.setLastOnePlayed(playerName);
 
-        } catch (Exception e) {
-            // Handle the exception and decide whether to nack or requeue the message
-            System.err.println("Error processing message: " + e.getMessage());
-            channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
-        }
+        gameRepository.save(game);
+
+        log.info("Operation was successful, waiting for the other player");
     }
 
-    public void initiateConnection(String url) {
-        try {
-            myWebSocketClient.connectToWebSocketServer(url);
-            if (myWebSocketClient.awaitConnection(5, TimeUnit.SECONDS)) {
-                System.out.println("Successfully connected to WebSocket server");
-            } else {
-                System.out.println("Failed to connect to WebSocket server within timeout");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void verifyNumberDivisibleByThree(int newNumber) {
+        if(newNumber % 3 != 0) {
+            throw new IllegalStateException("New Number not divisible by three, please choose another operation");
         }
-    }
-
-    public void processMessage(WebSocketSession session, String message) {
-//        // Parse the message
-//        int number = Integer.parseInt(message);
-//
-//        // Calculate the next move
-//        int move = calculateMove(number);
-//        int result = (number + move) / 3;
-//
-//        // Broadcast the move and result
-//        String response = String.format("Added: %d, Result: %d", move, result);
-//        session.sendMessage(new TextMessage(response));
-//
-//        // If result is 1, end the game
-//        if (result == 1) {
-//            session.sendMessage(new TextMessage("Game over"));
-//            session.close();
-//        }
-        System.out.println("I player " + playerName + " received a message:" + message);
     }
 
     private int calculateMove(int number) {
