@@ -1,5 +1,6 @@
 package com.justeattakeaway.codechallenge.model;
 
+import com.justeattakeaway.codechallenge.enums.GameState;
 import com.querydsl.core.annotations.QueryEntity;
 import lombok.*;
 import org.springframework.data.annotation.Id;

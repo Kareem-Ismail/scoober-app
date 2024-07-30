@@ -1,5 +1,6 @@
 package com.justeattakeaway.codechallenge.model;
 
+import com.justeattakeaway.codechallenge.enums.GameState;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
