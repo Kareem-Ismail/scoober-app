@@ -1,7 +1,7 @@
 package com.justeattakeaway.codechallenge.repository;
 
 import com.justeattakeaway.codechallenge.model.Game;
-import com.justeattakeaway.codechallenge.model.GameState;
+import com.justeattakeaway.codechallenge.enums.GameState;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;

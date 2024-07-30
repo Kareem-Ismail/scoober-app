@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GameOverMessage {
+public class GameOverMessage extends QueueMessage {
     private String winner;
     private int numberOfMoves;
 }
