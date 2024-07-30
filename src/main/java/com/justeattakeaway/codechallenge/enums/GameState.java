@@ -1,4 +1,4 @@
-package com.justeattakeaway.codechallenge.model;
+package com.justeattakeaway.codechallenge.enums;
 
 public enum GameState {
     IN_PROGRESS,
