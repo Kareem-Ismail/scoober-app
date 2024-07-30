@@ -43,8 +43,6 @@ public class PlayGameListener {
                     playGameService.playInAutomaticMode(gameDTO.getId());
                 else
                     log.info("Its your turn and the current number is {}", game.getLastNumber());
-                log.info("A gameDTO started with {} \n" +
-                        "Please select your gaming mode either Automatic or Manual or else it will be Automatic and choose the next operation whether +1, -1 or 0", gameDTO);
             }
 
         } catch (Exception e) {
